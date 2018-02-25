@@ -4,24 +4,47 @@ services:
     image: luffy
     command: bash -c "django-admin startproject testing && find . -exec chmod 777 {} \;"
     volumes: [".:/usr/src/app"]
+    networks:
+      admin:
+        ipv4_address: 10.10.10.5
   python-shell:
     image: luffy
     command: bash
     stdin_open: true
     tty: true
     volumes: [".:/usr/src/app"]
+    networks:
+      admin:
+        ipv4_address: 10.10.10.6
+    depends_on:
+      - python-sql
   python-sql:
     image: mysql
     volumes: ["./data:/var/lib/mysql"]
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE:  luffydata
-      MYSQL_USER: luffy
-      MYSQL_PASSWORD: luffy
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    networks:
+      admin:
+        ipv4_address: 10.10.10.3
   python-server:
     image: luffy
-    command: bash -c "cd testing && python manage.py runserver 8888"
+    command: bash -c "cd lucy && python manage.py makemigrations && gunicorn lucy.wsgi:application --bind 0:8888"
     volumes: [".:/usr/src/app"]
     depends_on:
       - python-sql
     ports: ["8000:8888"]
+    networks:
+      admin:
+        ipv4_address: 10.10.10.4
+    depends_on:
+      - python-sql
+networks:
+  admin:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.10.0/20
+          gateway: 10.10.10.1
