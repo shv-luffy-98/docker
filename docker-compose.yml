@@ -1,0 +1,27 @@
+version: '2.0'
+services:
+  python-projects:
+    image: luffy
+    command: bash -c "django-admin startproject testing && find . -exec chmod 777 {} \;"
+    volumes: [".:/usr/src/app"]
+  python-shell:
+    image: luffy
+    command: bash
+    stdin_open: true
+    tty: true
+    volumes: [".:/usr/src/app"]
+  python-sql:
+    image: mysql
+    volumes: ["./data:/var/lib/mysql"]
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE:  luffydata
+      MYSQL_USER: luffy
+      MYSQL_PASSWORD: luffy
+  python-server:
+    image: luffy
+    command: bash -c "cd testing && python manage.py runserver 8888"
+    volumes: [".:/usr/src/app"]
+    depends_on:
+      - python-sql
+    ports: ["8000:8888"]
